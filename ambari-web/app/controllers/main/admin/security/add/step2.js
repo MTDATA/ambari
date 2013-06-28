@@ -255,7 +255,8 @@ App.MainAdminSecurityAddStep2Controller = Em.Controller.extend({
 
   submit: function () {
     if (!this.get('isSubmitDisabled')) {
-      this.showHostPrincipalKeytabList();
+      // this.showHostPrincipalKeytabList();
+      App.router.send('next');
     }
   }
 
