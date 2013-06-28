@@ -153,7 +153,7 @@ processCSVFile () {
     echo "###########################################################################"
     echo "# Changing access permissions of host specific keytab files"
     echo "###########################################################################"
-    cat commands.chmod.1
+    #cat commands.chmod.1
     cat commands.chmod.2
     echo ""
     echo "###########################################################################"
