@@ -49,6 +49,7 @@ processCSVFile () {
     rm -f commands.chmod;
     rm -f commands.addprinc;
     rm -f commands.xst
+    rm -f commands.xst.cp
     rm -f commands.chown.1
     rm -f commands.chmod.1
     rm -f commands.chmod.2
@@ -56,6 +57,7 @@ processCSVFile () {
     seenHosts="";
     seenPrincipals="";
     
+    echo "mkdir -p ./tmp_keytabs" >> commands.mkdir;
     cat $csvFile | while read line; do
         hostName=`echo $line|cut -d , -f 1`;
         service=`echo $line|cut -d , -f 2`;
@@ -75,8 +77,13 @@ processCSVFile () {
           seenPrincipals="$seenPrincipals$principal"
         fi
         
+        tmpKeytabFile=${keytabFile/\/etc\/security\/keytabs/`pwd`/tmp_keytabs}
         newKeytabFile=${keytabFile/\/etc\/security\/keytabs/`pwd`/keytabs_$hostName}
-        echo -e "kadmin.local -q \"xst -k $newKeytabFile $principal\"" >> commands.xst;
+        if [ ! -f $tmpKeytabFile ]; then
+          echo "kadmin.local -q \"xst -k $tmpKeytabFile $principal\"" >> commands.xst;          
+        fi
+        echo "cp $tmpKeytabFile $newKeytabFile" >> commands.xst.cp
+        
         if [ "$service" == "SPNEGO User" ]; then
           echo "chmod 440 $newKeytabFile" >> commands.chmod.2
         else
@@ -137,6 +144,7 @@ processCSVFile () {
     echo "# Creating Kerberos Principal keytabs in host specific keytab folders"
     echo "###########################################################################"
     cat commands.xst;
+    cat commands.xst.cp;
     echo ""
     echo "###########################################################################"
     echo "# Changing ownerships of host specific keytab files"
@@ -148,11 +156,17 @@ processCSVFile () {
     echo "###########################################################################"
     cat commands.chmod.1
     cat commands.chmod.2
+    echo ""
+    echo "###########################################################################"
+    echo "# Cleanup"
+    echo "###########################################################################"
+    echo "rm -rf ./tmp_keytabs"
     
     rm -f commands.mkdir;
     rm -f commands.chmod;
     rm -f commands.addprinc;
     rm -f commands.xst
+    rm -f commands.xst.cp
     rm -f commands.chown.1
     rm -f commands.chmod.1
     rm -f commands.chmod.2
