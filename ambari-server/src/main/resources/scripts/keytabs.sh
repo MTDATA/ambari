@@ -72,47 +72,47 @@ processCSVFile () {
         
         if [[ $seenPrincipals != *$principal* ]]; then
           echo -e "kadmin.local -q \"addprinc -randkey $principal\"" >> commands.addprinc;
-          newKeytabFile=${keytabFile/\/etc\/security\/keytabs/`pwd`/keytabs_$hostName}
-          echo -e "kadmin.local -q \"xst -k $newKeytabFile $principal\"" >> commands.xst;
-          if [ "$service" == "SPNEGO User" ]; then
-            echo "chmod 440 $newKeytabFile" >> commands.chmod.2
-          else
-            echo "chmod 400 $newKeytabFile" >> commands.chmod.2
-          fi
-          
-          if [ "$service" == "NameNode" -o "$service" == "SNameNode" -o "$service" == "Ambari HDFS Test User" -o "$service" == "DataNode" ]; then
-            echo "chown hdfs:hadoop $newKeytabFile" >> commands.chown.1
-          fi
-          
-          if [ "$service" == "TaskTracker" -o "$service" == "JobTracker" ]; then
-            echo "chown mapred:hadoop $newKeytabFile" >> commands.chown.1
-          fi
-          
-          if [ "$service" == "Ambari Smoke Test User" ]; then
-            echo "chown ambari-qa:hadoop $newKeytabFile" >> commands.chown.1
-          fi
-          
-          if [ "$service" == "ZooKeeper Server" ]; then
-            echo "chown zookeeper:hadoop $newKeytabFile" >> commands.chown.1
-          fi
-          
-          if [ "$service" == "HiveServer2" ]; then
-            echo "chown hive:hadoop $newKeytabFile" >> commands.chown.1
-          fi
-          
-          if [ "$service" == "Oozie Server" ]; then
-            echo "chown oozie:hadoop $newKeytabFile" >> commands.chown.1
-          fi
-          
-          if [ "$service" == "Nagios Server" ]; then
-            echo "chown nagios:hadoop $newKeytabFile" >> commands.chown.1
-          fi
-          
-          if [ "$service" == "Ambari HBase Test User" -o "$service" == "HBase RegionServer" -o "$service" == "HBase Master" ]; then
-            echo "chown hbase:hadoop $newKeytabFile" >> commands.chown.1
-          fi
-          
           seenPrincipals="$seenPrincipals$principal"
+        fi
+        
+        newKeytabFile=${keytabFile/\/etc\/security\/keytabs/`pwd`/keytabs_$hostName}
+        echo -e "kadmin.local -q \"xst -k $newKeytabFile $principal\"" >> commands.xst;
+        if [ "$service" == "SPNEGO User" ]; then
+          echo "chmod 440 $newKeytabFile" >> commands.chmod.2
+        else
+          echo "chmod 400 $newKeytabFile" >> commands.chmod.2
+        fi
+        
+        if [ "$service" == "NameNode" -o "$service" == "SNameNode" -o "$service" == "Ambari HDFS Test User" -o "$service" == "DataNode" ]; then
+          echo "chown hdfs:hadoop $newKeytabFile" >> commands.chown.1
+        fi
+        
+        if [ "$service" == "TaskTracker" -o "$service" == "JobTracker" ]; then
+          echo "chown mapred:hadoop $newKeytabFile" >> commands.chown.1
+        fi
+        
+        if [ "$service" == "Ambari Smoke Test User" ]; then
+          echo "chown ambari-qa:hadoop $newKeytabFile" >> commands.chown.1
+        fi
+        
+        if [ "$service" == "ZooKeeper Server" ]; then
+          echo "chown zookeeper:hadoop $newKeytabFile" >> commands.chown.1
+        fi
+        
+        if [ "$service" == "HiveServer2" ]; then
+          echo "chown hive:hadoop $newKeytabFile" >> commands.chown.1
+        fi
+        
+        if [ "$service" == "Oozie Server" ]; then
+          echo "chown oozie:hadoop $newKeytabFile" >> commands.chown.1
+        fi
+        
+        if [ "$service" == "Nagios Server" ]; then
+          echo "chown nagios:hadoop $newKeytabFile" >> commands.chown.1
+        fi
+        
+        if [ "$service" == "Ambari HBase Test User" -o "$service" == "HBase RegionServer" -o "$service" == "HBase Master" ]; then
+          echo "chown hbase:hadoop $newKeytabFile" >> commands.chown.1
         fi
     done;
     
