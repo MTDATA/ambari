@@ -68,7 +68,6 @@ processCSVFile () {
               echo "mkdir -p ./keytabs_$hostName" >> commands.mkdir;
               echo "chmod 755 ./keytabs_$hostName" >> commands.chmod;
               echo "chown -R root:hadoop `pwd`/keytabs_$hostName" >> commands.chown.1
-              echo "chmod -R g+rX,o= `pwd`/keytabs_$hostName" >> commands.chmod.1
               seenHosts="$seenHosts$hostName";
         fi
         
