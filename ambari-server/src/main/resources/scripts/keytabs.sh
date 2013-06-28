@@ -64,7 +64,7 @@ processCSVFile () {
         
         if [[ $seenHosts != *$hostName* ]]; then
               echo "mkdir -p ./keytabs_$hostName" >> commands.mkdir;
-              echo "chmod 655 ./keytabs_$hostName" >> commands.chmod;
+              echo "chmod 755 ./keytabs_$hostName" >> commands.chmod;
               echo "chown -R root:hadoop `pwd`/keytabs_$hostName" >> commands.chown.1
               echo "chmod -R g+rX,o= `pwd`/keytabs_$hostName" >> commands.chmod.1
               seenHosts="$seenHosts$hostName";
@@ -74,7 +74,11 @@ processCSVFile () {
           echo -e "kadmin.local -q \"addprinc -randkey $principal\"" >> commands.addprinc;
           newKeytabFile=${keytabFile/\/etc\/security\/keytabs/`pwd`/keytabs_$hostName}
           echo -e "kadmin.local -q \"xst -k $newKeytabFile $principal\"" >> commands.xst;
-          echo "chmod 400 $newKeytabFile" >> commands.chmod.2
+          if [ "$service" == "SPNEGO User" ]; then
+            echo "chmod 440 $newKeytabFile" >> commands.chmod.2
+          else
+            echo "chmod 400 $newKeytabFile" >> commands.chmod.2
+          fi
           
           if [ "$service" == "NameNode" -o "$service" == "SNameNode" -o "$service" == "Ambari HDFS Test User" -o "$service" == "DataNode" ]; then
             echo "chown hdfs:hadoop $newKeytabFile" >> commands.chown.1
