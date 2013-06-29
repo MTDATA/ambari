@@ -53,9 +53,20 @@ processCSVFile () {
     rm -f commands.chown.1
     rm -f commands.chmod.1
     rm -f commands.chmod.2
+    rm -f commands.tar
     
     seenHosts="";
     seenPrincipals="";
+    
+    GROUP_HADOOP="hadoop"
+    USER_HDFS="hdfs";
+    USER_HBASE="hbase";
+    USER_MAPRED="mapred";
+    USER_SMOKE="ambari-qa";
+    USER_ZK="zookeeper";
+    USER_OOZIE="oozie";
+    USER_HIVE="hive";
+    USER_NAGIOS="nagios";
     
     echo "mkdir -p ./tmp_keytabs" >> commands.mkdir;
     cat $csvFile | while read line; do
@@ -67,7 +78,11 @@ processCSVFile () {
         if [[ $seenHosts != *$hostName* ]]; then
               echo "mkdir -p ./keytabs_$hostName" >> commands.mkdir;
               echo "chmod 755 ./keytabs_$hostName" >> commands.chmod;
-              echo "chown -R root:hadoop `pwd`/keytabs_$hostName" >> commands.chown.1
+              echo "chown -R root:$GROUP_HADOOP `pwd`/keytabs_$hostName" >> commands.chown.1
+              echo "mkdir -p `pwd`/tmp_tar/etc/security/" >> commands.tar
+              echo "mv  `pwd`/keytabs_$hostName `pwd`/tmp_tar/etc/security/keytabs" >> commands.tar
+              echo "tar -C `pwd`/tmp_tar/ -cf `pwd`/keytabs_$hostName.tar etc" >> commands.tar
+              echo "rm -rf `pwd`/tmp_tar" >> commands.tar
               seenHosts="$seenHosts$hostName";
         fi
         
@@ -83,42 +98,42 @@ processCSVFile () {
         fi
         echo "cp $tmpKeytabFile $newKeytabFile" >> commands.xst.cp
         
-        if [ "$service" == "SPNEGO User" ]; then
+        if [ "$service" == "SPNEGO User" -o "$service" == "Ambari HDFS Test User" -o "$service" == "Ambari Smoke Test User" -o "$service" == "Ambari HBase Test User" ]; then
           echo "chmod 440 $newKeytabFile" >> commands.chmod.2
         else
           echo "chmod 400 $newKeytabFile" >> commands.chmod.2
         fi
         
         if [ "$service" == "NameNode" -o "$service" == "SNameNode" -o "$service" == "Ambari HDFS Test User" -o "$service" == "DataNode" ]; then
-          echo "chown hdfs:hadoop $newKeytabFile" >> commands.chown.1
+          echo "chown $USER_HDFS:$GROUP_HADOOP $newKeytabFile" >> commands.chown.1
         fi
         
         if [ "$service" == "TaskTracker" -o "$service" == "JobTracker" ]; then
-          echo "chown mapred:hadoop $newKeytabFile" >> commands.chown.1
+          echo "chown $USER_MAPRED:$GROUP_HADOOP $newKeytabFile" >> commands.chown.1
         fi
         
         if [ "$service" == "Ambari Smoke Test User" ]; then
-          echo "chown ambari-qa:hadoop $newKeytabFile" >> commands.chown.1
+          echo "chown $USER_SMOKE:$GROUP_HADOOP $newKeytabFile" >> commands.chown.1
         fi
         
         if [ "$service" == "ZooKeeper Server" ]; then
-          echo "chown zookeeper:hadoop $newKeytabFile" >> commands.chown.1
+          echo "chown $USER_ZK:$GROUP_HADOOP $newKeytabFile" >> commands.chown.1
         fi
         
         if [ "$service" == "HiveServer2" ]; then
-          echo "chown hive:hadoop $newKeytabFile" >> commands.chown.1
+          echo "chown $USER_HIVE:$GROUP_HADOOP $newKeytabFile" >> commands.chown.1
         fi
         
         if [ "$service" == "Oozie Server" ]; then
-          echo "chown oozie:hadoop $newKeytabFile" >> commands.chown.1
+          echo "chown $USER_OOZIE:$GROUP_HADOOP $newKeytabFile" >> commands.chown.1
         fi
         
         if [ "$service" == "Nagios Server" ]; then
-          echo "chown nagios:hadoop $newKeytabFile" >> commands.chown.1
+          echo "chown $USER_NAGIOS:$GROUP_HADOOP $newKeytabFile" >> commands.chown.1
         fi
         
         if [ "$service" == "Ambari HBase Test User" -o "$service" == "HBase RegionServer" -o "$service" == "HBase Master" ]; then
-          echo "chown hbase:hadoop $newKeytabFile" >> commands.chown.1
+          echo "chown $USER_HBASE:$GROUP_HADOOP $newKeytabFile" >> commands.chown.1
         fi
     done;
     
@@ -157,9 +172,14 @@ processCSVFile () {
     cat commands.chmod.2
     echo ""
     echo "###########################################################################"
+    echo "# Packaging keytab folders"
+    echo "###########################################################################"
+    cat commands.tar
+    echo ""
+    echo "###########################################################################"
     echo "# Cleanup"
     echo "###########################################################################"
-    echo "rm -rf ./tmp_keytabs"
+    echo "#rm -rf ./tmp_keytabs"
     
     rm -f commands.mkdir;
     rm -f commands.chmod;
@@ -169,6 +189,7 @@ processCSVFile () {
     rm -f commands.chown.1
     rm -f commands.chmod.1
     rm -f commands.chmod.2
+    rm -f commands.tar
 }
 
 if (($# != 1)); then
