@@ -183,9 +183,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
                 "ON wf.workflowId = jobsummary.selectid " +
                 " SET " +
                 "lastUpdateTime = ?, " +
-                "duration = ? - (SELECT startTime FROM " +
-                WORKFLOW_TABLE +
-                " WHERE workflowId = selectid), " +
+                "duration = ? - startTime, " +
                 "numJobsCompleted = rows, " +
                 "inputBytes = input, " +
                 "outputBytes = output " +
