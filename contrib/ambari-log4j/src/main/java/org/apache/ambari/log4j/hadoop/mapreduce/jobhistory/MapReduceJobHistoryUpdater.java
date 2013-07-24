@@ -171,7 +171,16 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
     workflowUpdateNumCompletedPS =
         connection.prepareStatement(
             "UPDATE " +
-                WORKFLOW_TABLE +
+                WORKFLOW_TABLE + " wf " +
+            "INNER JOIN " +
+                "(SELECT count(*) as rows, sum(inputBytes) as input, " +
+                "sum(outputBytes) as output, workflowId as selectid FROM " +
+                JOB_TABLE +
+                " WHERE workflowId = (SELECT workflowId FROM " +
+                JOB_TABLE +
+                " WHERE jobId = ?) AND status = 'SUCCESS' " +
+                "GROUP BY workflowId) AS jobsummary " +
+                "ON wf.workflowId = jobsummary.selectid " +
                 " SET " +
                 "lastUpdateTime = ?, " +
                 "duration = ? - (SELECT startTime FROM " +
@@ -180,13 +189,6 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
                 "numJobsCompleted = rows, " +
                 "inputBytes = input, " +
                 "outputBytes = output " +
-            "FROM (SELECT count(*) as rows, sum(inputBytes) as input, " +
-                "sum(outputBytes) as output, workflowId as selectid FROM " +
-                JOB_TABLE +
-                " WHERE workflowId = (SELECT workflowId FROM " +
-                JOB_TABLE +
-                " WHERE jobId = ?) AND status = 'SUCCESS' " +
-                "GROUP BY workflowId) as jobsummary " +
             "WHERE workflowId = selectid"
             );
     
@@ -784,9 +786,9 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.setString(8, historyEvent.getJobid().toString());
       entityPS.executeUpdate();
       // job finished events always have success status
-      workflowUpdateNumCompletedPS.setLong(1, historyEvent.getFinishTime());
+      workflowUpdateNumCompletedPS.setString(1, historyEvent.getJobid().toString());
       workflowUpdateNumCompletedPS.setLong(2, historyEvent.getFinishTime());
-      workflowUpdateNumCompletedPS.setString(3, historyEvent.getJobid().toString());
+      workflowUpdateNumCompletedPS.setLong(3, historyEvent.getFinishTime());
       workflowUpdateNumCompletedPS.executeUpdate();
     } catch (SQLException sqle) {
       LOG.info("Failed to store " + historyEvent.getEventType() + " for job " + 
