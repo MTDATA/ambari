@@ -149,11 +149,15 @@ public class JobHistoryAppender extends AppenderSkeleton implements Appender {
       logThreadRunnable.close();
     } catch (IOException ioe) {
       LOG.info("Failed to close logThreadRunnable", ioe);
+    } catch (Exception e) {
+      LOG.info("Failed to close logThreadRunnable", e);
     }
     try {
       logThread.join(1000);
     } catch (InterruptedException ie) {
       LOG.info("logThread interrupted", ie);
+    } catch (Exception e) {
+      LOG.info("logThread interrupted", e);
     }
   }
 
