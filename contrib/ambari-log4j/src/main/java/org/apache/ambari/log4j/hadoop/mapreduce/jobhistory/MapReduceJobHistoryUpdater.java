@@ -537,7 +537,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       jobEndUpdate.setString(3, jobId);
       jobEndUpdate.executeUpdate();
     } catch (SQLException sqle) {
-      LOG.info("Failed to update mapsRuntime/reducesRuntime for " + jobId, 
+      LOG.warn("Failed to update mapsRuntime/reducesRuntime for " + jobId,
           sqle);
     }
   }
@@ -740,10 +740,10 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
           " and workflowId = " + workflowContext.getWorkflowId());
 
     } catch (SQLException sqle) {
-      LOG.info("Failed to store " + historyEvent.getEventType() + " for job " + 
+      LOG.warn("Failed to store " + historyEvent.getEventType() + " for job " +
           historyEvent.getJobId() + " into " + JOB_TABLE, sqle);
     } catch (Exception e) {
-      LOG.info("Failed to store " + historyEvent.getEventType() + " for job " + 
+      LOG.warn("Failed to store " + historyEvent.getEventType() + " for job " +
           historyEvent.getJobId() + " into " + JOB_TABLE, e);
     }
   }
@@ -789,7 +789,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       workflowUpdateNumCompletedPS.setLong(3, historyEvent.getFinishTime());
       workflowUpdateNumCompletedPS.executeUpdate();
     } catch (SQLException sqle) {
-      LOG.info("Failed to store " + historyEvent.getEventType() + " for job " + 
+      LOG.warn("Failed to store " + historyEvent.getEventType() + " for job " +
           historyEvent.getJobid() + " into " + JOB_TABLE, sqle);
     }
     
@@ -808,7 +808,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.setString(5, historyEvent.getJobId().toString());
       entityPS.executeUpdate();
     } catch (SQLException sqle) {
-      LOG.info("Failed to store " + historyEvent.getEventType() + " for job " + 
+      LOG.warn("Failed to store " + historyEvent.getEventType() + " for job " +
           historyEvent.getJobId() + " into " + JOB_TABLE, sqle);
     }
   }
@@ -821,7 +821,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.setString(2, historyEvent.getJobId().toString());
       entityPS.executeUpdate();
     } catch (SQLException sqle) {
-      LOG.info("Failed to store " + historyEvent.getEventType() + " for job " + 
+      LOG.warn("Failed to store " + historyEvent.getEventType() + " for job " +
           historyEvent.getJobId() + " into " + JOB_TABLE, sqle);
     }
   }
@@ -835,7 +835,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.setString(3, historyEvent.getJobId().toString());
       entityPS.executeUpdate();
     } catch (SQLException sqle) {
-      LOG.info("Failed to store " + historyEvent.getEventType() + " for job " + 
+      LOG.warn("Failed to store " + historyEvent.getEventType() + " for job " +
           historyEvent.getJobId() + " into " + JOB_TABLE, sqle);
     }
   }
@@ -851,7 +851,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.setString(5, historyEvent.getJobId().toString());
       entityPS.executeUpdate();
     } catch (SQLException sqle) {
-      LOG.info("Failed to store " + historyEvent.getEventType() + " for job " + 
+      LOG.warn("Failed to store " + historyEvent.getEventType() + " for job " +
           historyEvent.getJobId() + " into " + JOB_TABLE, sqle);
     }
     
@@ -869,7 +869,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.setString(5, historyEvent.getTaskId().toString());
       entityPS.executeUpdate();
     } catch (SQLException sqle) {
-      LOG.info("Failed to store " + historyEvent.getEventType() + " for task " + 
+      LOG.warn("Failed to store " + historyEvent.getEventType() + " for task " +
           historyEvent.getTaskId() + " into " + TASK_TABLE, sqle);
     }
   }
@@ -886,7 +886,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.setString(5, historyEvent.getTaskId().toString());
       entityPS.executeUpdate();
     } catch (SQLException sqle) {
-      LOG.info("Failed to store " + historyEvent.getEventType() + " for task " + 
+      LOG.warn("Failed to store " + historyEvent.getEventType() + " for task " +
           historyEvent.getTaskId() + " into " + TASK_TABLE, sqle);
     }
   }
@@ -909,7 +909,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.setString(7, historyEvent.getTaskId().toString());
       entityPS.executeUpdate();
     } catch (SQLException sqle) {
-      LOG.info("Failed to store " + historyEvent.getEventType() + " for task " + 
+      LOG.warn("Failed to store " + historyEvent.getEventType() + " for task " +
           historyEvent.getTaskId() + " into " + TASK_TABLE, sqle);
     }
   }
@@ -929,7 +929,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.setString(8, historyEvent.getTaskAttemptId().toString());
       entityPS.executeUpdate();
     } catch (SQLException sqle) {
-      LOG.info("Failed to store " + historyEvent.getEventType() + 
+      LOG.warn("Failed to store " + historyEvent.getEventType() +
           " for taskAttempt " + historyEvent.getTaskAttemptId() + 
           " into " + TASKATTEMPT_TABLE, sqle);
     }
@@ -957,7 +957,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.setString(7, historyEvent.getAttemptId().toString());
       entityPS.executeUpdate();
     } catch (SQLException sqle) {
-      LOG.info("Failed to store " + historyEvent.getEventType() + 
+      LOG.warn("Failed to store " + historyEvent.getEventType() +
           " for taskAttempt " + historyEvent.getAttemptId() + 
           " into " + TASKATTEMPT_TABLE, sqle);
     }
@@ -979,7 +979,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.setString(8, historyEvent.getTaskAttemptId().toString());
       entityPS.executeUpdate();
     } catch (SQLException sqle) {
-      LOG.info("Failed to store " + historyEvent.getEventType() + 
+      LOG.warn("Failed to store " + historyEvent.getEventType() +
           " for taskAttempt " + historyEvent.getTaskAttemptId() + 
           " into " + TASKATTEMPT_TABLE, sqle);
     }
@@ -1011,7 +1011,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.setString(10, historyEvent.getAttemptId().toString());
       entityPS.executeUpdate();
     } catch (SQLException sqle) {
-      LOG.info("Failed to store " + historyEvent.getEventType() + 
+      LOG.warn("Failed to store " + historyEvent.getEventType() +
           " for taskAttempt " + historyEvent.getAttemptId() + 
           " into " + TASKATTEMPT_TABLE, sqle);
     }
@@ -1044,7 +1044,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.setString(11, historyEvent.getAttemptId().toString());
       entityPS.executeUpdate();
     } catch (SQLException sqle) {
-      LOG.info("Failed to store " + historyEvent.getEventType() + 
+      LOG.warn("Failed to store " + historyEvent.getEventType() +
           " for taskAttempt " + historyEvent.getAttemptId() + 
           " into " + TASKATTEMPT_TABLE, sqle);
     }

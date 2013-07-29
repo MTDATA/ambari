@@ -36,6 +36,8 @@ import org.apache.log4j.spi.LoggingEvent;
 public class JobHistoryAppender extends AppenderSkeleton implements Appender {
 
   private static final Log LOG = LogFactory.getLog(JobHistoryAppender.class);
+
+  public static final int QUEUE_CAPACITY = 256;
   
   private final Queue<LoggingEvent> events;
   private LoggingThreadRunnable logThreadRunnable;
@@ -63,7 +65,7 @@ public class JobHistoryAppender extends AppenderSkeleton implements Appender {
   private LogStore logStore;
   
   public JobHistoryAppender() {
-    events = new LinkedBlockingQueue<LoggingEvent>();
+    events = new LinkedBlockingQueue<LoggingEvent>(QUEUE_CAPACITY);
     logParser = new MapReduceJobHistoryParser();
     logStore = nullStore;
   }
@@ -116,30 +118,27 @@ public class JobHistoryAppender extends AppenderSkeleton implements Appender {
           logStore = 
               new DatabaseStore(driver, database, user, password, 
                   new MapReduceJobHistoryUpdater());
+          logThreadRunnable =
+                  new LoggingThreadRunnable(events, logParser, logStore);
+          logThread = new Thread(logThreadRunnable);
+          logThread.setDaemon(true);
+          logThread.start();
         } catch (IOException ioe) {
-          LOG.debug("Failed to connect to db " + database, ioe);
+          LOG.warn("Failed to connect to db " + database, ioe);
           System.err.println("Failed to connect to db " + database + 
               " as user " + user + " password " + password + 
               " and driver " + driver + " with " + 
               StringUtils.stringifyException(ioe));
-          throw new RuntimeException(
-              "Failed to create database store for " + database, ioe);
         } catch (Exception e) {
-          LOG.debug("Failed to connect to db " + database, e);
+          LOG.warn("Failed to connect to db " + database +
+                  " as user " + user + " password " + password +
+                  " and driver " + driver, e);
           System.err.println("Failed to connect to db " + database + 
               " as user " + user + " password " + password + 
               " and driver " + driver + " with " + 
               StringUtils.stringifyException(e));
-          throw new RuntimeException(
-              "Failed to create database store for " + database, e);
         }
       }
-      logThreadRunnable = 
-          new LoggingThreadRunnable(events, logParser, logStore);
-      logThread = new Thread(logThreadRunnable);
-      logThread.setDaemon(true);
-      logThread.start();
-
       super.activateOptions();
     }
   }
@@ -164,7 +163,14 @@ public class JobHistoryAppender extends AppenderSkeleton implements Appender {
   }
 
   @Override
-  protected void append(LoggingEvent event) {
-    events.add(event);
+  public void append(LoggingEvent event) {
+    if (!events.offer(event)) {
+      //signal fail queue is full, there is a chance database is down
+      LOG.warn("workflow event queue full, there is a chance database is down");
+    }
+  }
+
+  public Queue<LoggingEvent> getEvents() {
+    return events;
   }
 }
