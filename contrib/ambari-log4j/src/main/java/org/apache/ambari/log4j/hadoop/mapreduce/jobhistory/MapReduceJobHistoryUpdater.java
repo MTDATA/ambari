@@ -753,7 +753,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
 
       Map<String, String> workflowTags = getWorkflowTags(historyEvent);
       etlWorkflowPS.setString(1, workflowContext.getWorkflowId());
-      etlWorkflowPS.setObject(2, workflowTags.get(FLOW_ID));
+      etlWorkflowPS.setString(2, workflowTags.get(FLOW_ID));
       try {
         etlWorkflowPS.setInt(3, Integer.parseInt(workflowTags.get(SCHEDULE_JOB_ID)));
       } catch (Exception e) {
@@ -1110,9 +1110,10 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       String[] kvs = workflowTags.split(" ");
       for (String kv : kvs) {
         try {
-          String[] param = kv.split("=");
+          String[] param = kv.split("\\\\=");
           map.put(param[0], param[1]);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
       }
     }
     return map;
