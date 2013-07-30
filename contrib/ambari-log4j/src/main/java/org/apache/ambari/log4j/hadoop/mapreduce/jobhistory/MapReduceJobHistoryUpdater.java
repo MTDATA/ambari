@@ -70,7 +70,11 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       LogFactory.getLog(MapReduceJobHistoryUpdater.class);
   
   private Connection connection;
-  
+
+  private static final String SCHEDULE_JOB_ID = "schedulejobid";
+  private static final String FLOW_ID = "flowid";
+
+  private static final String ETL_WORKFLOW_TABLE = "etlWorkflow";
   private static final String WORKFLOW_TABLE = "workflow";
   private static final String JOB_TABLE = "job";
   private static final String TASK_TABLE = "task";
@@ -80,6 +84,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
   private PreparedStatement workflowSelectPS = null;
   private PreparedStatement workflowUpdateTimePS = null;
   private PreparedStatement workflowUpdateNumCompletedPS = null;
+  private PreparedStatement etlWorkflowPS = null;
   
   private Map<Class<? extends HistoryEvent>, PreparedStatement> entitySqlMap =
       new HashMap<Class<? extends HistoryEvent>, PreparedStatement>();
@@ -104,6 +109,17 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
   private PreparedStatement jobEndUpdate;
   
   private void initializeJobPreparedStatements() throws SQLException {
+
+    /**
+     * Etl
+     */
+
+    etlWorkflowPS =
+        connection.prepareStatement(
+            "REPLACE INTO " +
+                ETL_WORKFLOW_TABLE +
+                " VALUES (?, ?, ?)"
+        );
 
     /** 
      * Job events
@@ -535,8 +551,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       jobEndUpdate.setString(3, jobId);
       jobEndUpdate.executeUpdate();
     } catch (SQLException sqle) {
-      LOG.warn("Failed to update mapsRuntime/reducesRuntime for " + jobId,
-          sqle);
+      LOG.warn("Failed to update mapsRuntime/reducesRuntime for " + jobId, sqle);
     }
   }
   
@@ -736,6 +751,12 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       LOG.debug("Successfully inserted job = " + jobId + 
           " and workflowId = " + workflowContext.getWorkflowId());
 
+      Map<String, String> workflowTags = getWorkflowTags(historyEvent);
+      etlWorkflowPS.setString(1, workflowContext.getWorkflowId());
+      etlWorkflowPS.setObject(2, workflowTags.get(FLOW_ID));
+      etlWorkflowPS.setInt(3, Integer.parseInt(workflowTags.get(SCHEDULE_JOB_ID)));
+      etlWorkflowPS.execute();
+
     } catch (SQLException sqle) {
       LOG.warn("Failed to store " + historyEvent.getEventType() + " for job " +
           historyEvent.getJobId() + " into " + JOB_TABLE, sqle);
@@ -927,7 +948,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.executeUpdate();
     } catch (SQLException sqle) {
       LOG.warn("Failed to store " + historyEvent.getEventType() +
-          " for taskAttempt " + historyEvent.getTaskAttemptId() + 
+          " for taskAttempt " + historyEvent.getTaskAttemptId() +
           " into " + TASKATTEMPT_TABLE, sqle);
     }
   }
@@ -939,7 +960,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
     if (historyEvent.getTaskType() == TaskType.MAP || 
         historyEvent.getTaskType() == TaskType.REDUCE) {
       LOG.debug("Ignoring TaskAttemptFinishedEvent for " + 
-        historyEvent.getTaskType());
+          historyEvent.getTaskType());
       return;
     }
     
@@ -955,7 +976,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.executeUpdate();
     } catch (SQLException sqle) {
       LOG.warn("Failed to store " + historyEvent.getEventType() +
-          " for taskAttempt " + historyEvent.getAttemptId() + 
+          " for taskAttempt " + historyEvent.getAttemptId() +
           " into " + TASKATTEMPT_TABLE, sqle);
     }
   }
@@ -977,7 +998,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.executeUpdate();
     } catch (SQLException sqle) {
       LOG.warn("Failed to store " + historyEvent.getEventType() +
-          " for taskAttempt " + historyEvent.getTaskAttemptId() + 
+          " for taskAttempt " + historyEvent.getTaskAttemptId() +
           " into " + TASKATTEMPT_TABLE, sqle);
     }
   }
@@ -1009,7 +1030,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.executeUpdate();
     } catch (SQLException sqle) {
       LOG.warn("Failed to store " + historyEvent.getEventType() +
-          " for taskAttempt " + historyEvent.getAttemptId() + 
+          " for taskAttempt " + historyEvent.getAttemptId() +
           " into " + TASKATTEMPT_TABLE, sqle);
     }
   }
@@ -1042,7 +1063,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.executeUpdate();
     } catch (SQLException sqle) {
       LOG.warn("Failed to store " + historyEvent.getEventType() +
-          " for taskAttempt " + historyEvent.getAttemptId() + 
+          " for taskAttempt " + historyEvent.getAttemptId() +
           " into " + TASKATTEMPT_TABLE, sqle);
     }
   }
@@ -1076,6 +1097,23 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
     } catch (SQLException sqle) {
       throw new IOException(sqle);
     }
+  }
+
+  public static Map<String, String> getWorkflowTags(JobSubmittedEvent jobSubmittedEvent) {
+    Map<String, String> map = new HashMap<String, String>();
+    try {
+      String workflowTags = jobSubmittedEvent.getWorkflowTags();
+      if (workflowTags != null) {
+        String[] kvs = workflowTags.split(" ");
+        for (String kv : kvs) {
+          String[] param = kv.split("=");
+          map.put(param[0], param[1]);
+        }
+      }
+    } catch (Exception e) {
+      LOG.warn(e.getMessage(), e);
+    }
+    return map;
   }
 
 }
