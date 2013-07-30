@@ -104,7 +104,12 @@ insert into ambari.user_roles(role_name, user_id)
 insert into ambari.metainfo(`metainfo_key`, `metainfo_value`)
   select 'version','1.3.0';
 
-
+CREATE TABLE `etlworkflow` (
+  `workflowId` varchar(255) NOT NULL,
+  `flowId` binary(8) DEFAULT NULL,
+  `schedulerJobId` int(11) DEFAULT NULL,
+  PRIMARY KEY (`workflowId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE workflow (
   workflowId VARCHAR(255), workflowName TEXT,
@@ -116,7 +121,7 @@ CREATE TABLE workflow (
   duration BIGINT,
   PRIMARY KEY (workflowId),
   FOREIGN KEY (parentWorkflowId) REFERENCES workflow(workflowId)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE job (
   jobId VARCHAR(255), workflowId VARCHAR(255), jobName TEXT, workflowEntityName TEXT,
@@ -130,7 +135,7 @@ CREATE TABLE job (
   inputBytes BIGINT, outputBytes BIGINT,
   PRIMARY KEY(jobId),
   FOREIGN KEY(workflowId) REFERENCES workflow(workflowId)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE task (
   taskId VARCHAR(255), jobId VARCHAR(255), taskType TEXT, splits TEXT,
@@ -138,7 +143,7 @@ CREATE TABLE task (
   failedAttempt TEXT,
   PRIMARY KEY(taskId),
   FOREIGN KEY(jobId) REFERENCES job(jobId)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE taskAttempt (
   taskAttemptId VARCHAR(255), taskId VARCHAR(255), jobId VARCHAR(255), taskType TEXT, taskTracker TEXT,
@@ -150,7 +155,7 @@ CREATE TABLE taskAttempt (
   PRIMARY KEY(taskAttemptId),
   FOREIGN KEY(jobId) REFERENCES job(jobId),
   FOREIGN KEY(taskId) REFERENCES task(taskId)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE hdfsEvent (
   timestamp BIGINT,
@@ -160,7 +165,7 @@ CREATE TABLE hdfsEvent (
   srcPath TEXT,
   dstPath TEXT,
   permissions TEXT
-);
+) ;
 
 CREATE TABLE mapreduceEvent (
   timestamp BIGINT,

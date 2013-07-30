@@ -74,7 +74,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
   private static final String SCHEDULE_JOB_ID = "schedulejobid";
   private static final String FLOW_ID = "flowid";
 
-  private static final String ETL_WORKFLOW_TABLE = "etlWorkflow";
+  private static final String ETL_WORKFLOW_TABLE = "etlworkflow";
   private static final String WORKFLOW_TABLE = "workflow";
   private static final String JOB_TABLE = "job";
   private static final String TASK_TABLE = "task";
@@ -754,7 +754,11 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       Map<String, String> workflowTags = getWorkflowTags(historyEvent);
       etlWorkflowPS.setString(1, workflowContext.getWorkflowId());
       etlWorkflowPS.setObject(2, workflowTags.get(FLOW_ID));
-      etlWorkflowPS.setInt(3, Integer.parseInt(workflowTags.get(SCHEDULE_JOB_ID)));
+      try {
+        etlWorkflowPS.setInt(3, Integer.parseInt(workflowTags.get(SCHEDULE_JOB_ID)));
+      } catch (Exception e) {
+        etlWorkflowPS.setObject(3, null);
+      }
       etlWorkflowPS.execute();
 
     } catch (SQLException sqle) {
@@ -1101,17 +1105,15 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
 
   public static Map<String, String> getWorkflowTags(JobSubmittedEvent jobSubmittedEvent) {
     Map<String, String> map = new HashMap<String, String>();
-    try {
-      String workflowTags = jobSubmittedEvent.getWorkflowTags();
-      if (workflowTags != null) {
-        String[] kvs = workflowTags.split(" ");
-        for (String kv : kvs) {
+    String workflowTags = jobSubmittedEvent.getWorkflowTags();
+    if (workflowTags != null) {
+      String[] kvs = workflowTags.split(" ");
+      for (String kv : kvs) {
+        try {
           String[] param = kv.split("=");
           map.put(param[0], param[1]);
-        }
+        } catch (Exception e) {}
       }
-    } catch (Exception e) {
-      LOG.warn(e.getMessage(), e);
     }
     return map;
   }
