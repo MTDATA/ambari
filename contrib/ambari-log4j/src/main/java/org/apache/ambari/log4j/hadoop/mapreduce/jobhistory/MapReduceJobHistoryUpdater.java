@@ -162,9 +162,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
                 "workflowContext = ?, " +
                 "numJobsTotal = ?, " +
                 "lastUpdateTime = ?, " +
-                "duration = ? - (SELECT startTime FROM " +
-                WORKFLOW_TABLE +
-                " WHERE workflowId = ?) " +
+                "duration = ? - startTime " +
                 "WHERE workflowId = ?"
             );
     
@@ -726,7 +724,6 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
         workflowUpdateTimePS.setLong(3, historyEvent.getSubmitTime());
         workflowUpdateTimePS.setLong(4, historyEvent.getSubmitTime());
         workflowUpdateTimePS.setString(5, workflowContext.getWorkflowId());
-        workflowUpdateTimePS.setString(6, workflowContext.getWorkflowId());
         workflowUpdateTimePS.executeUpdate();
         LOG.debug("Successfully updated workflowId = " + 
             workflowContext.getWorkflowId());
