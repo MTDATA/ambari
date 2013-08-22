@@ -809,10 +809,10 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.setInt(5, historyEvent.getFailedReduces());
       entityPS.setLong(6, inputBytes);
       entityPS.setLong(7, outputBytes);
-      entityPS.setString(8, historyEvent.getJobid().toString());
-      entityPS.setString(9, mapCounters);
-      entityPS.setString(10, reduceCounters);
-      entityPS.setString(11, totalCounters);
+      entityPS.setString(8, mapCounters);
+      entityPS.setString(9, reduceCounters);
+      entityPS.setString(10, totalCounters);
+      entityPS.setString(11, historyEvent.getJobid().toString());
       entityPS.executeUpdate();
       // job finished events always have success status
       workflowUpdateNumCompletedPS.setString(1, historyEvent.getJobid().toString());
