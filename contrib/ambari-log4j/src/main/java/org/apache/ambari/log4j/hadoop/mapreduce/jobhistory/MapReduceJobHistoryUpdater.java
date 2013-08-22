@@ -217,7 +217,10 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
                 "failedMaps = ?, " +
                 "failedReduces = ?, " +
                 "inputBytes = ?, " +
-                "outputBytes = ? " +
+                "outputBytes = ?, " +
+                "mapCounters = ?, " +
+                "reduceCounters = ?, " +
+                "jobCounters = ? " +
                 "WHERE " +
                 "jobId = ?" 
             );
@@ -776,6 +779,9 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       LoggingEvent logEvent, JobFinishedEvent historyEvent) {
     Counters counters = historyEvent.getMapCounters();
     long inputBytes = 0;
+    String mapCounters = historyEvent.getMapCounters().toString(),
+            reduceCounters = historyEvent.getReduceCounters().toString(),
+            totalCounters = historyEvent.getTotalCounters().toString();
     if (counters != null) {
       for (CounterGroup group : counters) {
         for (Counter counter : group) {
@@ -804,6 +810,9 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
       entityPS.setLong(6, inputBytes);
       entityPS.setLong(7, outputBytes);
       entityPS.setString(8, historyEvent.getJobid().toString());
+      entityPS.setString(9, mapCounters);
+      entityPS.setString(10, reduceCounters);
+      entityPS.setString(11, totalCounters);
       entityPS.executeUpdate();
       // job finished events always have success status
       workflowUpdateNumCompletedPS.setString(1, historyEvent.getJobid().toString());
