@@ -136,7 +136,7 @@ public class Main {
   }
 
   /**
-   * 加载配置项
+   * load properties
    *
    * @param file
    * @return
@@ -200,7 +200,7 @@ public class Main {
   }
 
   /**
-   * 指定日期当天的最后一秒
+   * return last minute of date
    */
   public static Date lastMin(Date date) {
     Calendar cal = Calendar.getInstance();
@@ -213,7 +213,7 @@ public class Main {
   }
 
   /**
-   * 今天第一秒
+   * return first minute of date
    */
   public static Date firstMin(Date date) {
     Calendar cal = Calendar.getInstance();
