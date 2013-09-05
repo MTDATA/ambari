@@ -37,11 +37,12 @@ public class JobHistoryAppender extends AppenderSkeleton implements Appender {
 
   private static final Log LOG = LogFactory.getLog(JobHistoryAppender.class);
 
-  public static final int QUEUE_CAPACITY = 256;
+  public static final int QUEUE_CAPACITY = 1024;
   
   private final Queue<LoggingEvent> events;
   private LoggingThreadRunnable logThreadRunnable;
   private Thread logThread;
+  private static long WAIT_EMPTY_QUEUE = 2000;
 
   private final LogParser logParser;
 
@@ -65,7 +66,7 @@ public class JobHistoryAppender extends AppenderSkeleton implements Appender {
   private LogStore logStore;
   
   public JobHistoryAppender() {
-    events = new LinkedBlockingQueue<LoggingEvent>(QUEUE_CAPACITY);
+    events = new LinkedBlockingQueue<LoggingEvent>(QUEUE_CAPACITY * 2);
     logParser = new MapReduceJobHistoryParser();
     logStore = nullStore;
   }
@@ -153,7 +154,7 @@ public class JobHistoryAppender extends AppenderSkeleton implements Appender {
       LOG.info("Failed to close logThreadRunnable", e);
     }
     try {
-      logThread.join(1000);
+      logThread.join();
     } catch (InterruptedException ie) {
       LOG.info("logThread interrupted", ie);
     } catch (Exception e) {
@@ -168,6 +169,15 @@ public class JobHistoryAppender extends AppenderSkeleton implements Appender {
 
   @Override
   public void append(LoggingEvent event) {
+    if (events.size() >= QUEUE_CAPACITY) {
+      while (events.size() > QUEUE_CAPACITY/2) {
+        try {
+          Thread.sleep(WAIT_EMPTY_QUEUE);
+        } catch (InterruptedException e) {
+          LOG.debug("queue size is over " + QUEUE_CAPACITY);
+        }
+      }
+    }
     if (!events.offer(event)) {
       //signal fail queue is full, there is a chance database is down
       LOG.warn("workflow event queue full, there is a chance database is down");

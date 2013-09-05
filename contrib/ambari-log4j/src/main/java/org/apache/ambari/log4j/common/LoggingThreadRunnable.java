@@ -27,12 +27,12 @@ import org.apache.log4j.spi.LoggingEvent;
 
 public class LoggingThreadRunnable implements Runnable {
   private static final Log LOG = LogFactory.getLog(LoggingThreadRunnable.class);
-  private static long WAIT_EMPTY_QUEUE = 60000;
+  private static long WAIT_EMPTY_QUEUE = 2000;
   private final Queue<LoggingEvent> events;
   private final LogParser parser;
   private final LogStore store;
   private final AtomicBoolean done = new AtomicBoolean(false);
-  
+
   public LoggingThreadRunnable(
       Queue<LoggingEvent> events, 
       LogParser parser, 
@@ -44,7 +44,7 @@ public class LoggingThreadRunnable implements Runnable {
   
   @Override
   public void run() {
-    while (!done.get()) {
+    while (!done.get() || !events.isEmpty()) {
       LoggingEvent event = null;
       while ((event = events.poll()) != null) {
         Object result = null;
@@ -55,10 +55,15 @@ public class LoggingThreadRunnable implements Runnable {
               store.persist(event, result);
             } catch (IOException e) {
               LOG.warn("Failed to persist " + result);
+            } catch (Exception e) {
+              LOG.warn("Failed to persist " + result);
             }
+            result = parser.getParseResult();
           }
         } catch (IOException ioe) {
-          LOG.warn("Failed to parse log-event: " + event);
+          LOG.warn("Failed to parse log-event: \n" + event.getMessage(), ioe);
+        } catch (Exception e) {
+          LOG.warn("Failed to parse log-event: \n" + event.getMessage(), e);
         }
       }
       try {
@@ -66,10 +71,10 @@ public class LoggingThreadRunnable implements Runnable {
       } catch(InterruptedException ie) {
         //ignore and continue
       }
-    	  
     }
     try {
       store.close();
+      LOG.info("logging thread done.");
     } catch (IOException ioe) {
       LOG.info("Failed to close logStore", ioe);
     }
@@ -78,4 +83,5 @@ public class LoggingThreadRunnable implements Runnable {
   public void close() throws IOException {
     done.set(true);
   }
+
 }
