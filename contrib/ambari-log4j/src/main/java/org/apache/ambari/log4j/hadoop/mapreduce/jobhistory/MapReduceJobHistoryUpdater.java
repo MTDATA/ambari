@@ -76,11 +76,11 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
   private static final String SCHEDULE_JOB_ID = "schedulejobid";
   private static final String FLOW_ID = "flowid";
 
-  private static final String ETL_WORKFLOW_TABLE = "etlworkflow";
-  private static final String WORKFLOW_TABLE = "workflow";
-  private static final String JOB_TABLE = "job";
-  private static final String TASK_TABLE = "task";
-  private static final String TASKATTEMPT_TABLE = "taskAttempt";
+  public static final String ETL_WORKFLOW_TABLE = "etlworkflow";
+  public static final String WORKFLOW_TABLE = "workflow";
+  public static final String JOB_TABLE = "job";
+  public static final String TASK_TABLE = "task";
+  public static final String TASKATTEMPT_TABLE = "taskAttempt";
   
   private PreparedStatement workflowPS = null;
   private PreparedStatement workflowSelectPS = null;

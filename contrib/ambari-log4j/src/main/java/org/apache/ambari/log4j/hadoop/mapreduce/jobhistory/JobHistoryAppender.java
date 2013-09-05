@@ -66,7 +66,7 @@ public class JobHistoryAppender extends AppenderSkeleton implements Appender {
   private LogStore logStore;
   
   public JobHistoryAppender() {
-    events = new LinkedBlockingQueue<LoggingEvent>(QUEUE_CAPACITY * 2);
+    events = new LinkedBlockingQueue<LoggingEvent>(QUEUE_CAPACITY);
     logParser = new MapReduceJobHistoryParser();
     logStore = nullStore;
   }
@@ -169,18 +169,16 @@ public class JobHistoryAppender extends AppenderSkeleton implements Appender {
 
   @Override
   public void append(LoggingEvent event) {
-    if (events.size() >= QUEUE_CAPACITY) {
-      while (events.size() > QUEUE_CAPACITY/2) {
-        try {
-          Thread.sleep(WAIT_EMPTY_QUEUE);
-        } catch (InterruptedException e) {
-          LOG.debug("queue size is over " + QUEUE_CAPACITY);
-        }
+    if (events.size() >= QUEUE_CAPACITY - 20) {
+      try {
+        Thread.sleep(WAIT_EMPTY_QUEUE);
+      } catch (InterruptedException e) {
       }
     }
     if (!events.offer(event)) {
       //signal fail queue is full, there is a chance database is down
       LOG.warn("workflow event queue full, there is a chance database is down");
+      System.exit(1);
     }
   }
 

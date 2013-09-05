@@ -58,7 +58,6 @@ public class LoggingThreadRunnable implements Runnable {
             } catch (Exception e) {
               LOG.warn("Failed to persist " + result);
             }
-            result = parser.getParseResult();
           }
         } catch (IOException ioe) {
           LOG.warn("Failed to parse log-event: \n" + event.getMessage(), ioe);

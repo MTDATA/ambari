@@ -18,6 +18,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Properties;
 
 /**
@@ -60,6 +68,17 @@ public class Main {
     String driver = config.getProperty("database.driverClassName");
     String user = config.getProperty("database.username");
     String password = config.getProperty("database.password");
+    if (args.length >= 3 && "--clean".equals(args[2])) {
+      String dateStr = fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length());
+      Date date = parse(dateStr);
+      date = date == null? new Date() : date;
+      try {
+        clean(database, user, password, driver, firstMin(date).getTime(), lastMin(date).getTime());
+      } catch (Exception e) {
+        LOG.error(e.getMessage(), e);
+        System.exit(1);
+      }
+    }
     FileReader fr = new FileReader(f);
     BufferedReader br = new BufferedReader(fr);
     String log;
@@ -132,6 +151,78 @@ public class Main {
       LOG.error(e.getMessage(), e);
     }
     return null;
+  }
+
+  public static void clean(String url, String username, String password, String driver, long begin,
+                           long end) throws ClassNotFoundException, SQLException {
+    Class.forName(driver);
+    Connection connect = DriverManager.getConnection(url, username, password);
+    PreparedStatement deleteTaskAttemptPS = connect.prepareStatement("delete from "
+            + MapReduceJobHistoryUpdater.TASKATTEMPT_TABLE + " where startTime between ? and ?"),
+            deleteTaskPS = connect.prepareStatement("delete from "
+                    + MapReduceJobHistoryUpdater.TASK_TABLE + " where startTime between ? and ?"),
+            deleteJobPS = connect.prepareStatement("delete from "
+                    + MapReduceJobHistoryUpdater.JOB_TABLE + " where submitTime between ? and ?"),
+            deleteEtlWorkFlowPS = connect.prepareStatement("delete etlwf from "
+                    + MapReduceJobHistoryUpdater.ETL_WORKFLOW_TABLE + " etlwf "
+                    + " inner join " + MapReduceJobHistoryUpdater.WORKFLOW_TABLE + " wf "
+                    + " on wf.workflowId = etlwf.workflowId "
+                    + " where wf.startTime between ? and ?"),
+            deleteWorkFlowPS = connect.prepareStatement("delete from "
+                    + MapReduceJobHistoryUpdater.WORKFLOW_TABLE + " where startTime between ? and ?");
+    deleteTaskAttemptPS.setLong(1, begin);
+    deleteTaskAttemptPS.setLong(2, end);
+    deleteTaskPS.setLong(1, begin);
+    deleteTaskPS.setLong(2, end);
+    deleteJobPS.setLong(1, begin);
+    deleteJobPS.setLong(2, end);
+    deleteEtlWorkFlowPS.setLong(1, begin);
+    deleteEtlWorkFlowPS.setLong(2, end);
+    deleteWorkFlowPS.setLong(1, begin);
+    deleteWorkFlowPS.setLong(2, end);
+    connect.setAutoCommit(false);
+    LOG.info("clean data between " + begin + " " + end);
+    LOG.info("delete " + MapReduceJobHistoryUpdater.TASKATTEMPT_TABLE + " " + deleteTaskAttemptPS.executeUpdate() + " rows");
+    LOG.info("delete " + MapReduceJobHistoryUpdater.TASK_TABLE + " " + deleteTaskPS.executeUpdate() + " rows");
+    LOG.info("delete " + MapReduceJobHistoryUpdater.JOB_TABLE + " " + deleteJobPS.executeUpdate() + " rows");
+    LOG.info("delete " + MapReduceJobHistoryUpdater.ETL_WORKFLOW_TABLE + " " + deleteEtlWorkFlowPS.executeUpdate() + " rows");
+    LOG.info("delete " + MapReduceJobHistoryUpdater.WORKFLOW_TABLE + " " + deleteWorkFlowPS.executeUpdate() + " rows");
+    connect.commit();
+    connect.close();
+  }
+
+  public static Date parse(String date) {
+    try {
+      return new SimpleDateFormat("yyyy-MM-dd").parse(date);
+    } catch (ParseException e) {
+    }
+    return null;
+  }
+
+  /**
+   * 指定日期当天的最后一秒
+   */
+  public static Date lastMin(Date date) {
+    Calendar cal = Calendar.getInstance();
+    cal.setTime(date);
+    cal.set(Calendar.HOUR_OF_DAY, 23);
+    cal.set(Calendar.MINUTE, 59);
+    cal.set(Calendar.SECOND, 59);
+    cal.set(Calendar.MILLISECOND, 0);
+    return cal.getTime();
+  }
+
+  /**
+   * 今天第一秒
+   */
+  public static Date firstMin(Date date) {
+    Calendar cal = Calendar.getInstance();
+    cal.setTime(date);
+    cal.set(Calendar.HOUR_OF_DAY, 0);
+    cal.set(Calendar.MINUTE, 0);
+    cal.set(Calendar.SECOND, 0);
+    cal.set(Calendar.MILLISECOND, 0);
+    return cal.getTime();
   }
 
 }
