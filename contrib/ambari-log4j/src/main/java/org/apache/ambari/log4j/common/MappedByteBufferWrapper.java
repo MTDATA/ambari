@@ -60,7 +60,6 @@ public class MappedByteBufferWrapper {
 
   public void close() throws IOException {
     mappedByteBuffer = null;
-    mappedByteBuffer.force();
     if (randomAccessFile != null) {
       randomAccessFile.close();
       randomAccessFile = null;
