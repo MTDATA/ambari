@@ -115,6 +115,7 @@ public class Main {
         Date now = firstMin(new Date());
         if (!now.equals(today)) {
           position = 0;
+          today = now;
         }
         mappedByteBufferWrapper = new MappedByteBufferWrapper(fileName, "r", position, FileChannel.MapMode.READ_ONLY);
         position = mappedByteBufferWrapper.nextPosition();
