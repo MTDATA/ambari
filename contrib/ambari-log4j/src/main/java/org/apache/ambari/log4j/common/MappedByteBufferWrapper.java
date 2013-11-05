@@ -10,9 +10,13 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.BufferUnderflowException;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 public class MappedByteBufferWrapper {
 
@@ -59,11 +63,30 @@ public class MappedByteBufferWrapper {
   }
 
   public void close() throws IOException {
+    clean();
     mappedByteBuffer = null;
     if (randomAccessFile != null) {
       randomAccessFile.close();
       randomAccessFile = null;
     }
+  }
+
+  private void clean() {
+    AccessController.doPrivileged(new PrivilegedAction<Object>() {
+      public Object run() {
+        try {
+          if (mappedByteBuffer != null) {
+            Method cleanerMethod = mappedByteBuffer.getClass().getMethod("cleaner");
+            cleanerMethod.setAccessible(true);
+            sun.misc.Cleaner cleaner = (sun.misc.Cleaner) cleanerMethod.invoke(mappedByteBuffer);
+            cleaner.clean();
+          }
+        } catch (Exception e) {
+          LOG.error(e.getMessage(), e);
+        }
+        return null;
+      }
+    });
   }
 
   public long nextPosition() throws IOException {
