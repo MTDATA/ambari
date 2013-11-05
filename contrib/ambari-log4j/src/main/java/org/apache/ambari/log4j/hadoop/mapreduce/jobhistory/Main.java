@@ -5,6 +5,7 @@
  */
 package org.apache.ambari.log4j.hadoop.mapreduce.jobhistory;
 
+import org.apache.ambari.log4j.common.MappedByteBufferWrapper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Category;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.channels.FileChannel;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -42,8 +44,7 @@ public class Main {
   static final String LOG_FLAG = " DEBUG org.apache.hadoop.mapred.JobHistory$JobHistoryLogger: ";
   static int LOG_PREFIX_LENGTH = "2013-09-03 23:59:43,795".length() + LOG_FLAG.length();
 
-  public static void main(String[] args) throws IOException, NoSuchMethodException,
-          IllegalAccessException, InvocationTargetException, InstantiationException {
+  public static void main(String[] args) throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException, InterruptedException {
     if (args.length < 2) {
       LOG.error("must specify a jobtrackcer log file name and a config file name");
       System.exit(1);
@@ -79,9 +80,6 @@ public class Main {
         System.exit(1);
       }
     }
-    FileReader fr = new FileReader(f);
-    BufferedReader br = new BufferedReader(fr);
-    String log;
     JobHistoryAppender appender = new JobHistoryAppender();
     appender.setDatabase(database);
     appender.setDriver(driver);
@@ -100,33 +98,42 @@ public class Main {
     LOG.info("password=" + password);
     StringBuilder sb = new StringBuilder();
     int i = 0;
-    while ((log = br.readLine()) != null) {
+    MappedByteBufferWrapper mappedByteBufferWrapper = null;
+    long position = 0;
+    String log;
+    while (true) {
       i++;
       if (i % 1000 == 0) {
         LOG.info("parse line " + i);
       }
-      if (log.contains(LOG_FLAG)) {
-        log = log.substring(LOG_PREFIX_LENGTH);
-        if (log.charAt(log.length() - 1) == JOB_HISTORY_LINE_DELIMITER_CHAR) {
-          LoggingEvent loggingEvent = newLoggingEvent(c, log);
-          appender.append(loggingEvent);
-        } else {
-          sb.append(log);
+      if (mappedByteBufferWrapper == null || (log = mappedByteBufferWrapper.readLine()) == null) {
+        if (mappedByteBufferWrapper != null) {
+          mappedByteBufferWrapper.close();
+          Thread.sleep(3 * 1000);
         }
+        mappedByteBufferWrapper = new MappedByteBufferWrapper(fileName, "r", position, FileChannel.MapMode.READ_ONLY);
+        position = mappedByteBufferWrapper.size();
       } else {
-        if (sb.length() != 0) {
-          sb.append(log);
-          if (log.length() > 1 && log.charAt(log.length() - 1) == JOB_HISTORY_LINE_DELIMITER_CHAR) {
-            LoggingEvent loggingEvent = newLoggingEvent(c, sb.toString());
+        if (log.contains(LOG_FLAG)) {
+          log = log.substring(LOG_PREFIX_LENGTH);
+          if (log.charAt(log.length() - 1) == JOB_HISTORY_LINE_DELIMITER_CHAR) {
+            LoggingEvent loggingEvent = newLoggingEvent(c, log);
             appender.append(loggingEvent);
-            sb = new StringBuilder();
+          } else {
+            sb.append(log);
+          }
+        } else {
+          if (sb.length() != 0) {
+            sb.append(log);
+            if (log.length() > 1 && log.charAt(log.length() - 1) == JOB_HISTORY_LINE_DELIMITER_CHAR) {
+              LoggingEvent loggingEvent = newLoggingEvent(c, sb.toString());
+              appender.append(loggingEvent);
+              sb = new StringBuilder();
+            }
           }
         }
       }
     }
-    appender.close();
-    LOG.info("end parse jobtracker time use = " + (System.currentTimeMillis() - startTime) / 1000 + " s");
-    System.exit(0);
   }
 
 
