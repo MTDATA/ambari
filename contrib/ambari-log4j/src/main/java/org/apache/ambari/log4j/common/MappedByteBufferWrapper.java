@@ -20,12 +20,16 @@ public class MappedByteBufferWrapper {
 
   private MappedByteBuffer mappedByteBuffer;
   private RandomAccessFile randomAccessFile;
+  private long nextPosition;
+  private final static long DEFAULT_SIZE = 1024 * 1024 * 100;
 
   public MappedByteBufferWrapper(String name, String mode, long position, FileChannel.MapMode mapMode) throws IOException {
     randomAccessFile = new RandomAccessFile(name, mode);
     FileChannel fileChannel = randomAccessFile.getChannel();
-    LOG.info("position=" + position + " mappedByteSize=" + (fileChannel.size() - position));
-    mappedByteBuffer = fileChannel.map(mapMode, position, fileChannel.size() - position);
+    long size = Math.min(DEFAULT_SIZE, fileChannel.size() - position);
+    nextPosition = position + size;
+    LOG.info("position=" + position + " mappedByteSize=" + size + " nextPosition=" + nextPosition);
+    mappedByteBuffer = fileChannel.map(mapMode, position, size);
   }
 
   public String readLine() {
@@ -56,14 +60,15 @@ public class MappedByteBufferWrapper {
 
   public void close() throws IOException {
     mappedByteBuffer = null;
+    mappedByteBuffer.force();
     if (randomAccessFile != null) {
       randomAccessFile.close();
       randomAccessFile = null;
     }
   }
 
-  public long size() throws IOException {
-    return randomAccessFile.getChannel().size();
+  public long nextPosition() throws IOException {
+    return nextPosition;
   }
 
 }

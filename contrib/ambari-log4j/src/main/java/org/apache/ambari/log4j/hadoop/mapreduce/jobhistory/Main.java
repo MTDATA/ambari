@@ -101,6 +101,7 @@ public class Main {
     MappedByteBufferWrapper mappedByteBufferWrapper = null;
     long position = 0;
     String log;
+    Date today = firstMin(new Date());
     while (true) {
       i++;
       if (i % 1000 == 0) {
@@ -111,8 +112,12 @@ public class Main {
           mappedByteBufferWrapper.close();
           Thread.sleep(3 * 1000);
         }
+        Date now = firstMin(new Date());
+        if (!now.equals(today)) {
+          position = 0;
+        }
         mappedByteBufferWrapper = new MappedByteBufferWrapper(fileName, "r", position, FileChannel.MapMode.READ_ONLY);
-        position = mappedByteBufferWrapper.size();
+        position = mappedByteBufferWrapper.nextPosition();
       } else {
         if (log.contains(LOG_FLAG)) {
           log = log.substring(LOG_PREFIX_LENGTH);
