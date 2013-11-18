@@ -1094,7 +1094,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
             if (counter.name.equals("HDFS_BYTES_READ") || 
                 counter.name.equals("FILE_BYTES_READ"))
               inputBytes += counter.value;
-            else if (counter.name.equals("HDFS_BYTES_WRITTEN") || 
+            else if (counter.name.equals("HDFS_BYTES_WRITTEN") ||
                 counter.name.equals("FILE_BYTES_WRITTEN"))
               outputBytes += counter.value;
           }

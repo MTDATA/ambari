@@ -17,6 +17,7 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.channels.FileChannel;
@@ -64,7 +65,6 @@ public class Main {
       LOG.error("can't load properties from " + configFileName +" .");
       System.exit(1);
     }
-    long startTime = System.currentTimeMillis();
     String database = config.getProperty("database.url");
     String driver = config.getProperty("database.driverClassName");
     String user = config.getProperty("database.username");
@@ -101,7 +101,6 @@ public class Main {
     MappedByteBufferWrapper mappedByteBufferWrapper = null;
     long position = 0;
     String log;
-    Date today = firstMin(new Date());
     while (true) {
       i++;
       if (i % 1000 == 0) {
@@ -110,14 +109,15 @@ public class Main {
       if (mappedByteBufferWrapper == null || (log = mappedByteBufferWrapper.readLine()) == null) {
         if (mappedByteBufferWrapper != null) {
           mappedByteBufferWrapper.close();
-          Thread.sleep(3 * 1000);
+          Thread.sleep(5 * 1000);
         }
-        Date now = firstMin(new Date());
-        if (!now.equals(today)) {
+        RandomAccessFile logFile = new RandomAccessFile(fileName, "r");
+        if (logFile.getChannel().size() < position) {
           position = 0;
-          today = now;
+          i = 0;
+          LOG.info("parse file " + firstMin(new Date()));
         }
-        mappedByteBufferWrapper = new MappedByteBufferWrapper(fileName, "r", position, FileChannel.MapMode.READ_ONLY);
+        mappedByteBufferWrapper = new MappedByteBufferWrapper(logFile, position, FileChannel.MapMode.READ_ONLY);
         position = mappedByteBufferWrapper.nextPosition();
       } else {
         if (log.contains(LOG_FLAG)) {

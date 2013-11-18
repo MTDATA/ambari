@@ -27,8 +27,9 @@ public class MappedByteBufferWrapper {
   private long nextPosition;
   private final static long DEFAULT_SIZE = 1024 * 1024 * 100;
 
-  public MappedByteBufferWrapper(String name, String mode, long position, FileChannel.MapMode mapMode) throws IOException {
-    randomAccessFile = new RandomAccessFile(name, mode);
+  public MappedByteBufferWrapper(RandomAccessFile file, long position,
+                                 FileChannel.MapMode mapMode) throws IOException {
+    randomAccessFile = file;
     FileChannel fileChannel = randomAccessFile.getChannel();
     long size = Math.min(DEFAULT_SIZE, fileChannel.size() - position);
     nextPosition = position + size;
