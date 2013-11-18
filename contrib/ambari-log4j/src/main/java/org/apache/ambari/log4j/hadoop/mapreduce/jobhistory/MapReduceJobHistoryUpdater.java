@@ -75,6 +75,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
 
   private static final String SCHEDULE_JOB_ID = "schedulejobid";
   private static final String FLOW_ID = "flowid";
+  private static final String EVENT_ID = "eventid";
 
   public static final String ETL_WORKFLOW_TABLE = "etlworkflow";
   public static final String WORKFLOW_TABLE = "workflow";
@@ -120,7 +121,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
         connection.prepareStatement(
             "REPLACE INTO " +
                 ETL_WORKFLOW_TABLE +
-                " VALUES (?, ?, ?)"
+                " VALUES (?, ?, ?, ?)"
         );
 
     /** 
@@ -765,6 +766,7 @@ public class MapReduceJobHistoryUpdater implements LogStoreUpdateProvider {
         } catch (Exception e) {
           etlWorkflowPS.setObject(3, null);
         }
+        etlWorkflowPS.setString(4, workflowTags.get(EVENT_ID));
         etlWorkflowPS.execute();
       }
     } catch (SQLException sqle) {
