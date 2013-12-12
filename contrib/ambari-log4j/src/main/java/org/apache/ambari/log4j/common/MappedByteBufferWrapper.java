@@ -83,7 +83,9 @@ public class MappedByteBufferWrapper {
             cleaner.clean();
           }
         } catch (Exception e) {
-          LOG.error(e.getMessage(), e);
+          if (!(e instanceof NullPointerException)) {
+            LOG.error(e.getMessage(), e);
+          }
         }
         return null;
       }
